@@ -1,19 +1,16 @@
 import { GoogleGenAI } from "@google/genai";
 import localforage from "localforage";
 
-// Initialize the Gemini API client - only if we have a valid API key
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const defaultAi = apiKey && apiKey.trim() ? new GoogleGenAI({ apiKey }) : null;
-
 function getAiClient(customApiKey?: string) {
-  if (customApiKey && customApiKey.trim()) {
-    return new GoogleGenAI({ apiKey: customApiKey });
+  const apiKey = customApiKey && customApiKey.trim() 
+    ? customApiKey 
+    : import.meta.env.VITE_GEMINI_API_KEY;
+
+  if (!apiKey || !apiKey.trim()) {
+    throw new Error('Nenhuma chave de API do Gemini foi configurada. Por favor, configure a variável VITE_GEMINI_API_KEY ou use a chave customizada nas configurações.');
   }
-  if (defaultAi) {
-    return defaultAi;
-  }
-  // If no API key is available, throw a meaningful error
-  throw new Error('Nenhuma chave de API do Gemini foi configurada. Por favor, configure a variável VITE_GEMINI_API_KEY ou use a chave customizada nas configurações.');
+
+  return new GoogleGenAI({ apiKey });
 }
 
 function createWavBlob(base64Data: string, sampleRate: number = 24000): Blob {
