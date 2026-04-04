@@ -4,6 +4,12 @@ import { generateAudio, checkAudioCache } from './services/tts';
 import { Play, Pause, Square, Download, FileText, Loader2, Scale, Database, Menu, WifiOff, Wifi, Key, ExternalLink, X } from 'lucide-react';
 
 export default function App() {
+  // Log that app is mounting
+  useEffect(() => {
+    console.log('App mounted successfully');
+    console.log('Documents loaded:', documents.length);
+  }, []);
+
   const [activeCategory, setActiveCategory] = useState<DocumentCategory>('Crime');
   
   // Filter documents by active category
