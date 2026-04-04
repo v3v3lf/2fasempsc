@@ -9,7 +9,10 @@ export default function App() {
   // Filter documents by active category
   const filteredDocs = documents.filter(doc => doc.category === activeCategory);
   
-  const [selectedDoc, setSelectedDoc] = useState<LegalDocument>(filteredDocs[0]);
+  const [selectedDoc, setSelectedDoc] = useState<LegalDocument | null>(() => {
+    const filtered = documents.filter(doc => doc.category === 'Crime');
+    return filtered.length > 0 ? filtered[0] : null;
+  });
   const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -104,7 +107,8 @@ export default function App() {
 
   // Update selected doc when category changes
   useEffect(() => {
-    setSelectedDoc(documents.filter(doc => doc.category === activeCategory)[0]);
+    const filtered = documents.filter(doc => doc.category === activeCategory);
+    setSelectedDoc(filtered.length > 0 ? filtered[0] : null);
   }, [activeCategory]);
 
   // Stop audio when switching documents
@@ -118,6 +122,11 @@ export default function App() {
   }, [selectedDoc]);
 
   const handlePlayPause = async () => {
+    if (!selectedDoc) {
+      setError("Nenhum documento selecionado");
+      return;
+    }
+
     if (isPlaying) {
       audioRef.current?.pause();
       setIsPlaying(false);
@@ -175,6 +184,7 @@ export default function App() {
   };
 
   const handleDownload = () => {
+    if (!selectedDoc) return;
     const url = audioUrls[selectedDoc.id];
     if (!url) return;
     
@@ -384,18 +394,26 @@ export default function App() {
         {/* Document Text */}
         <main className="flex-1 overflow-y-auto p-8 bg-gray-50">
           <div className="max-w-3xl mx-auto bg-white p-10 rounded-xl shadow-sm border border-gray-100 pb-32">
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
-                {error}
+            {!selectedDoc ? (
+              <div className="p-4 bg-yellow-50 text-yellow-700 rounded-lg border border-yellow-200">
+                Nenhum documento disponível para esta categoria.
               </div>
+            ) : (
+              <>
+                {error && (
+                  <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
+                    {error}
+                  </div>
+                )}
+                <div className="prose prose-blue max-w-none">
+                  {selectedDoc.content.split('\n').map((paragraph, idx) => (
+                    <p key={idx} className="mb-4 text-gray-700 leading-relaxed text-lg">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+              </>
             )}
-            <div className="prose prose-blue max-w-none">
-              {selectedDoc?.content.split('\n').map((paragraph, idx) => (
-                <p key={idx} className="mb-4 text-gray-700 leading-relaxed text-lg">
-                  {paragraph}
-                </p>
-              ))}
-            </div>
           </div>
         </main>
 
