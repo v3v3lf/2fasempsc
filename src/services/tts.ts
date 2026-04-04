@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import localforage from "localforage";
 
 // Initialize the Gemini API client
-const defaultAi = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const defaultAi = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || "" });
 
 function getAiClient(customApiKey?: string) {
   if (customApiKey) {
