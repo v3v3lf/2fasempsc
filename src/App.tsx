@@ -1,3 +1,5 @@
+import { BUILD_TIME } from './buildTime';
+
 export default function App() {
   return (
     <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif', textAlign: 'center', backgroundColor: '#f0f9ff', minHeight: '100vh' }}>
@@ -8,7 +10,7 @@ export default function App() {
         Se você vê essa mensagem, significa que React está renderizando corretamente.
       </p>
       <p style={{ fontSize: '16px', color: '#666' }}>
-        Timestamp: {new Date().toLocaleString()}
+        Build Time: {BUILD_TIME}
       </p>
       <button 
         onClick={() => alert('Botão está funcionando!')}
