@@ -1,0 +1,5 @@
+{
+  "name": "Leitor de Peças Jurídicas",
+  "description": "Aplicativo para gerar e ouvir áudios de modelos de documentos jurídicos com leitura suave para facilitar o aprendizado.",
+  "requestFramePermissions": []
+}
