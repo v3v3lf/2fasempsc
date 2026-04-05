@@ -1,3 +1,10 @@
+import localforage from 'localforage';
+
+const audioCache = localforage.createInstance({
+  name: 'juridical-audio-cache',
+  storeName: 'audios',
+});
+
 let voicesLoaded = false;
 
 function loadVoices(): Promise<SpeechSynthesisVoice[]> {
@@ -89,4 +96,53 @@ export async function speak(text: string, onEnd?: () => void, rate?: number, voi
 
 export function stopSpeaking() {
   window.speechSynthesis.cancel();
+}
+
+export async function generateGeminiAudio(text: string, apiKey: string): Promise<ArrayBuffer> {
+  const { GoogleGenAI } = await import('@google/genai');
+  const ai = new GoogleGenAI({ apiKey });
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.0-flash-exp',
+    contents: [{
+      role: 'user',
+      parts: [{ text: `Gere um áudio em português brasileiro a partir deste texto. Retorne apenas o áudio, sem texto adicional: ${text}` }]
+    }],
+    config: {
+      responseModalities: ['audio'],
+    },
+  });
+
+  if (!response.candidates || !response.candidates[0]?.content?.parts) {
+    throw new Error('No audio generated');
+  }
+
+  const part = response.candidates[0].content.parts.find(p => p.inlineData?.data);
+  if (!part?.inlineData?.data) {
+    throw new Error('No audio data in response');
+  }
+
+  const binaryString = atob(part.inlineData.data);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+export async function getCachedAudio(docId: string): Promise<ArrayBuffer | null> {
+  try {
+    const cached = await audioCache.getItem<ArrayBuffer>(docId);
+    return cached;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveAudioToCache(docId: string, audioData: ArrayBuffer): Promise<void> {
+  try {
+    await audioCache.setItem(docId, audioData);
+  } catch (error) {
+    console.error('Failed to cache audio:', error);
+  }
 }
