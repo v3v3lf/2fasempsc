@@ -51,7 +51,7 @@ Local, data. Promotor de Justiça`
   {
     id: "crime-2",
     category: "Crime",
-    title: "2. Estrutura/Modelo - Denúncia (Crime Comum)",
+    title: "3. Modelo - Denúncia (Rito Júri)",
     content: `AO JUÍZO DA... VARA CRIMINAL / DO TRIBUNAL DO JÚRI DA COMARCA DE.../UF Autos de Inquérito Policial n.º...
 
 O MINISTÉRIO PÚBLICO DO ESTADO DE…, pelo Promotor de Justiça em exercício nesta Promotoria, nos termos do art. 129, I, da Constituição Federal (CF), art. 25, III, da Lei n.º 8.625/1993, art... da Lei Complementar Estadual n.º XXXX/XXXX [Lei Orgânica do MPXX]; art. 100 do Código Penal (CP); e arts. 24 e 41, do Código de Processo Penal (CPP), vem, à presença de Vossa Excelência, oferecer DENÚNCIA, em face de NOME (qualificação), pelas condutas delituosas a seguir.
@@ -101,7 +101,7 @@ EXEMPLOS: Consta dos inclusos autos de inquérito policial que, [TEMPO], na Rua 
   {
     id: "crime-3",
     category: "Crime",
-    title: "3. Modelo - Denúncia (Rito Júri)",
+    title: "3. Modelo - Denúncia (Procedimento Comum)",
     content: `EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO DA VARA DO JÚRI DA COMARCA DE SANTA HELENA/SP. Autos de IP nº:
 
 O MINISTÉRIO PÚBLICO DO ESTADO DE SANTA CATARINA, por seu Promotor de Justiça infra-assinado, com fulcro no artigo 129, inciso I, da Constituição Federal; artigos 24 e 41 do Código de Processo Penal; artigo 25, inciso III, da Lei 8.625/93 e artigo 103, inciso VI, da Lei Complementar Estadual 734/93, vem, respeitosamente, à presença de Vossa Excelência, oferecer DENÚNCIA contra JOÃO SILVA, qualificado em fls., pela prática do crime descrito nos termos que seguem:
