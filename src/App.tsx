@@ -190,7 +190,7 @@ export default function App() {
         if (!audioData) {
           setGeminiAudioLoading(true);
           try {
-            console.log('Generating Gemini audio with model: gemini-3-flash-preview');
+            console.log('Generating Gemini audio with model: gemini-2.5-flash-preview-tts');
             audioData = await generateGeminiAudio(selectedDoc.content, apiKey);
             await saveAudioToCache(docId, audioData);
             console.log('Audio generated successfully');

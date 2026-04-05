@@ -99,7 +99,7 @@ export function stopSpeaking() {
 }
 
 export async function generateGeminiAudio(text: string, apiKey: string): Promise<ArrayBuffer> {
-  const { GoogleGenAI } = await import('@google/genai');
+  const { GoogleGenAI, Modality } = await import('@google/genai');
   const ai = new GoogleGenAI({ apiKey });
 
   try {
@@ -107,21 +107,32 @@ export async function generateGeminiAudio(text: string, apiKey: string): Promise
       model: 'gemini-2.5-flash-preview-tts',
       contents: [{
         role: 'user',
-        parts: [{ text: `Gere um áudio em português brasileiro a partir deste texto. Retorne apenas o áudio, sem texto adicional: ${text}` }]
+        parts: [{ text }]
       }],
       config: {
-        responseModalities: ['audio'],
+        responseModalities: [Modality.AUDIO],
+        speechConfig: {
+          languageCode: 'pt-BR',
+        },
       },
     });
 
-    console.log('Gemini response:', response);
+    console.log('Gemini TTS response:', JSON.stringify(response, null, 2));
 
     if (!response.candidates || !response.candidates[0]?.content?.parts) {
+      const textResponse = response.text;
+      if (textResponse) {
+        console.log('Model returned text instead of audio:', textResponse);
+      }
       throw new Error('Resposta inválida do Gemini. Verifique se o modelo suporta geração de áudio.');
     }
 
     const part = response.candidates[0].content.parts.find(p => p.inlineData?.data);
     if (!part?.inlineData?.data) {
+      const textPart = response.candidates[0].content.parts.find(p => p.text);
+      if (textPart?.text) {
+        console.log('Model returned text:', textPart.text.substring(0, 200));
+      }
       throw new Error('Nenhum áudio na resposta do Gemini. O modelo pode não suportar geração de áudio.');
     }
 
@@ -132,7 +143,7 @@ export async function generateGeminiAudio(text: string, apiKey: string): Promise
     }
     return bytes.buffer;
   } catch (error) {
-    console.error('Erro detalhado:', error);
+    console.error('Erro detalhado na geração de áudio:', error);
     throw error;
   }
 }
