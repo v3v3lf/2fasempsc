@@ -102,32 +102,39 @@ export async function generateGeminiAudio(text: string, apiKey: string): Promise
   const { GoogleGenAI } = await import('@google/genai');
   const ai = new GoogleGenAI({ apiKey });
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-exp',
-    contents: [{
-      role: 'user',
-      parts: [{ text: `Gere um áudio em português brasileiro a partir deste texto. Retorne apenas o áudio, sem texto adicional: ${text}` }]
-    }],
-    config: {
-      responseModalities: ['audio'],
-    },
-  });
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [{
+        role: 'user',
+        parts: [{ text: `Gere um áudio em português brasileiro a partir deste texto. Retorne apenas o áudio, sem texto adicional: ${text}` }]
+      }],
+      config: {
+        responseModalities: ['audio'],
+      },
+    });
 
-  if (!response.candidates || !response.candidates[0]?.content?.parts) {
-    throw new Error('No audio generated');
-  }
+    console.log('Gemini response:', response);
 
-  const part = response.candidates[0].content.parts.find(p => p.inlineData?.data);
-  if (!part?.inlineData?.data) {
-    throw new Error('No audio data in response');
-  }
+    if (!response.candidates || !response.candidates[0]?.content?.parts) {
+      throw new Error('Resposta inválida do Gemini. Verifique se o modelo suporta geração de áudio.');
+    }
 
-  const binaryString = atob(part.inlineData.data);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+    const part = response.candidates[0].content.parts.find(p => p.inlineData?.data);
+    if (!part?.inlineData?.data) {
+      throw new Error('Nenhum áudio na resposta do Gemini. O modelo pode não suportar geração de áudio.');
+    }
+
+    const binaryString = atob(part.inlineData.data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  } catch (error) {
+    console.error('Erro detalhado:', error);
+    throw error;
   }
-  return bytes.buffer;
 }
 
 export async function getCachedAudio(docId: string): Promise<ArrayBuffer | null> {

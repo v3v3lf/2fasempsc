@@ -190,17 +190,20 @@ export default function App() {
         if (!audioData) {
           setGeminiAudioLoading(true);
           try {
+            console.log('Generating Gemini audio with model: gemini-3-flash-preview');
             audioData = await generateGeminiAudio(selectedDoc.content, apiKey);
             await saveAudioToCache(docId, audioData);
+            console.log('Audio generated successfully');
           } catch (error) {
             console.error('Failed to generate Gemini audio:', error);
+            alert('Erro ao gerar áudio: ' + (error as Error).message);
             setGeminiAudioLoading(false);
             return;
           }
           setGeminiAudioLoading(false);
         }
         
-        const blob = new Blob([audioData], { type: 'audio/mp3' });
+        const blob = new Blob([audioData], { type: 'audio/mpeg' });
         const url = URL.createObjectURL(blob);
         setGeminiAudioSrc(url);
         
