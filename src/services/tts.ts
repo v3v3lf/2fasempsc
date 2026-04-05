@@ -23,12 +23,12 @@ function loadVoices(): Promise<SpeechSynthesisVoice[]> {
   });
 }
 
-export async function speak(text: string, onEnd?: () => void) {
+export async function speak(text: string, onEnd?: () => void, rate?: number) {
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'pt-BR';
-  utterance.rate = 0.95;
+  utterance.rate = rate ?? 0.95;
   utterance.pitch = 0.85;
   utterance.volume = 1;
 
