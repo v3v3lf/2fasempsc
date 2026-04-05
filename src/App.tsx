@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { documents, LegalDocument, DocumentCategory } from './data/documents';
-import { speak, stopSpeaking, getAvailableVoices, VoiceOption, generateGeminiAudio, getCachedAudio, saveAudioToCache } from './services/tts';
+import { speak, stopSpeaking, getAvailableVoices, VoiceOption } from './services/tts';
 
 const FONT_SIZES = [
   { label: 'A-', value: 'text-xs' },
@@ -136,13 +136,6 @@ export default function App() {
     return localStorage.getItem('preferredVoice') || '';
   });
   const [theme, setTheme] = useState<ThemeKey>('light');
-  const [showSettings, setShowSettings] = useState(false);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
-  const [useGeminiTts, setUseGeminiTts] = useState(() => localStorage.getItem('useGeminiTts') === 'true');
-  const [geminiAudioLoading, setGeminiAudioLoading] = useState(false);
-  const [geminiAudioSrc, setGeminiAudioSrc] = useState<string | null>(null);
-  const [geminiAudioPlaying, setGeminiAudioPlaying] = useState(false);
-  const [geminiAudioProgress, setGeminiAudioProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const t = THEMES[theme];
@@ -174,58 +167,13 @@ export default function App() {
     setIsSpeaking(false);
   }, [activeCategory]);
 
-  const handlePlay = async () => {
-    if (isSpeaking || geminiAudioPlaying) {
+  const handlePlay = () => {
+    if (isSpeaking) {
       stopSpeaking();
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
       setIsSpeaking(false);
-      setGeminiAudioPlaying(false);
     } else if (selectedDoc) {
-      if (useGeminiTts && apiKey) {
-        const docId = selectedDoc.id;
-        let audioData = await getCachedAudio(docId);
-        
-        if (!audioData) {
-          setGeminiAudioLoading(true);
-          try {
-            console.log('Generating Gemini audio with model: gemini-2.5-flash-preview-tts');
-            audioData = await generateGeminiAudio(selectedDoc.content, apiKey);
-            await saveAudioToCache(docId, audioData);
-            console.log('Audio generated successfully');
-          } catch (error) {
-            console.error('Failed to generate Gemini audio:', error);
-            alert('Erro ao gerar áudio: ' + (error as Error).message);
-            setGeminiAudioLoading(false);
-            return;
-          }
-          setGeminiAudioLoading(false);
-        }
-        
-        const blob = new Blob([audioData], { type: 'audio/mpeg' });
-        const url = URL.createObjectURL(blob);
-        setGeminiAudioSrc(url);
-        
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        
-        audio.onended = () => {
-          setGeminiAudioPlaying(false);
-          setGeminiAudioProgress(0);
-          URL.revokeObjectURL(url);
-        };
-        
-        audio.ontimeupdate = () => {
-          setGeminiAudioProgress((audio.currentTime / audio.duration) * 100);
-        };
-        
-        audio.play();
-        setGeminiAudioPlaying(true);
-      } else {
-        speak(selectedDoc.content, () => setIsSpeaking(false), SPEED_OPTIONS[speedIdx], selectedVoice);
-        setIsSpeaking(true);
-      }
+      speak(selectedDoc.content, () => setIsSpeaking(false), SPEED_OPTIONS[speedIdx], selectedVoice);
+      setIsSpeaking(true);
     }
   };
 
@@ -250,13 +198,12 @@ export default function App() {
       setShowThemeMenu(false);
       setShowFontMenu(false);
       setShowVoiceMenu(false);
-      setShowSettings(false);
     };
-    if (showSpeedMenu || showThemeMenu || showFontMenu || showVoiceMenu || showSettings) {
+    if (showSpeedMenu || showThemeMenu || showFontMenu || showVoiceMenu) {
       document.addEventListener('click', close);
       return () => document.removeEventListener('click', close);
     }
-  }, [showSpeedMenu, showThemeMenu, showFontMenu, showVoiceMenu, showSettings]);
+  }, [showSpeedMenu, showThemeMenu, showFontMenu, showVoiceMenu]);
 
   const themeColors: Record<ThemeKey, string> = {
     light: 'bg-white border-gray-300',
@@ -375,7 +322,7 @@ export default function App() {
 
           <div className="relative">
             <button
-              onClick={(e) => { e.stopPropagation(); setShowVoiceMenu(!showVoiceMenu); setShowThemeMenu(false); setShowSpeedMenu(false); setShowFontMenu(false); setShowSettings(false); }}
+              onClick={(e) => { e.stopPropagation(); setShowVoiceMenu(!showVoiceMenu); setShowThemeMenu(false); setShowSpeedMenu(false); setShowFontMenu(false); }}
               className={`flex items-center gap-1 px-2 py-1.5 ${t.btnBg} rounded-lg text-xs font-medium ${t.btnIcon} ${t.btnHover} transition-colors`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -413,97 +360,31 @@ export default function App() {
 
           <div className="relative">
             <button
-              onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings); setShowThemeMenu(false); setShowSpeedMenu(false); setShowFontMenu(false); setShowVoiceMenu(false); }}
-              className={`flex items-center gap-1 px-2 py-1.5 ${t.btnBg} rounded-lg text-xs font-medium ${t.btnIcon} ${t.btnHover} transition-colors`}
+              onClick={handlePlay}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all shadow-sm ${
+                isSpeaking
+                  ? 'bg-red-500 text-white hover:bg-red-600'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              {isSpeaking ? (
+                <>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <rect x="6" y="4" width="4" height="12" rx="1" />
+                    <rect x="12" y="4" width="4" height="12" rx="1" />
+                  </svg>
+                  <span className="hidden sm:inline">Parar</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                  </svg>
+                  <span className="hidden sm:inline">Ouvir</span>
+                </>
+              )}
             </button>
-            {showSettings && (
-              <div className={`absolute right-0 top-full mt-1 ${t.speedMenuBg} rounded-lg shadow-lg border ${t.speedMenuBorder} py-3 z-50 min-w-[280px]`}>
-                <p className={`text-xs font-medium ${t.speedMenuText} px-3 pb-2 border-b ${t.speedMenuBorder} mb-2`}>Configurações de Áudio</p>
-                <div className="px-3 py-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <label className={`text-xs font-medium ${t.speedMenuText}`}>API Key do Gemini</label>
-                    <a
-                      href="https://aistudio.google.com/apikey"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-500 hover:underline"
-                    >
-                      Obter API Key
-                    </a>
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="password"
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      placeholder="Cole sua API key aqui..."
-                      className={`flex-1 px-2 py-1.5 text-sm rounded border ${t.speedMenuBorder} ${t.speedMenuText} bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-500`}
-                    />
-                    <button
-                      onClick={() => { localStorage.setItem('geminiApiKey', apiKey); }}
-                      className="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                    >
-                      Salvar
-                    </button>
-                  </div>
-                </div>
-                <div className="px-3 py-2 border-t border-gray-100">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={useGeminiTts}
-                      onChange={(e) => { setUseGeminiTts(e.target.checked); localStorage.setItem('useGeminiTts', e.target.checked.toString()); }}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <span className={`text-sm ${t.speedMenuText}`}>Usar Gemini TTS</span>
-                  </label>
-                  <p className={`text-xs ${t.speedMenuText} opacity-70 mt-1 ml-6`}>
-                    {useGeminiTts ? 'Audio via IA (online)' : 'Voz do navegador (offline)'}
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
-
-          <button
-            onClick={handlePlay}
-            disabled={geminiAudioLoading}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all shadow-sm disabled:opacity-50 ${
-              isSpeaking || geminiAudioPlaying
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {geminiAudioLoading ? (
-              <>
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span className="hidden sm:inline">Gerando...</span>
-              </>
-            ) : isSpeaking || geminiAudioPlaying ? (
-              <>
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <rect x="6" y="4" width="4" height="12" rx="1" />
-                  <rect x="12" y="4" width="4" height="12" rx="1" />
-                </svg>
-                <span className="hidden sm:inline">Parar</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                </svg>
-                <span className="hidden sm:inline">Ouvir</span>
-              </>
-            )}
-          </button>
         </div>
       </header>
 
