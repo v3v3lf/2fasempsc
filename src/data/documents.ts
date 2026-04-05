@@ -54,8 +54,6 @@ Local, data. Promotor de Justiça`
     title: "2. Estrutura/Modelo - Denúncia (Crime Comum)",
     content: `AO JUÍZO DA... VARA CRIMINAL / DO TRIBUNAL DO JÚRI DA COMARCA DE.../UF Autos de Inquérito Policial n.º...
 
-Atenção! Para fins de rigor técnico — embora essa distinção ainda não seja comumente exigida em espelhos de correção —, recomenda-se a seguinte sequência procedimental: a) O candidato deve, primeiramente, oferecer a denúncia perante o juiz das garantias e, em seguida, elaborar cota ministerial com pedido de encaminhamento dos autos ao juiz competente para a instrução e julgamento; ou (por estilo) b) A cota ministerial é apresentada primeiro, endereçada ao juiz das garantias, requerendo a remessa dos autos ao juiz da instrução e julgamento. A denúncia, neste caso, já é direcionada ao juízo comum.
-
 O MINISTÉRIO PÚBLICO DO ESTADO DE…, pelo Promotor de Justiça em exercício nesta Promotoria, nos termos do art. 129, I, da Constituição Federal (CF), art. 25, III, da Lei n.º 8.625/1993, art... da Lei Complementar Estadual n.º XXXX/XXXX [Lei Orgânica do MPXX]; art. 100 do Código Penal (CP); e arts. 24 e 41, do Código de Processo Penal (CPP), vem, à presença de Vossa Excelência, oferecer DENÚNCIA, em face de NOME (qualificação), pelas condutas delituosas a seguir.
 
 ENQUADRAMENTO TÍPICO - DIVIDIR POR FATOS CONSTA: DIA, HORÁRIO, RUA + DENUNCIADO + DOLO + ELEMENTAR + VÍTIMA + MODUS OPERANDI + LAUDO + QUALIFICADORAS/CA/AG
