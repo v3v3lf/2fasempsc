@@ -104,7 +104,7 @@ export async function generateGeminiAudio(text: string, apiKey: string): Promise
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash-preview-tts',
       contents: [{
         role: 'user',
         parts: [{ text: `Gere um áudio em português brasileiro a partir deste texto. Retorne apenas o áudio, sem texto adicional: ${text}` }]
