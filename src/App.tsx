@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { documents, LegalDocument, DocumentCategory } from './data/documents';
 import { speak, stopSpeaking, getAvailableVoices, VoiceOption } from './services/tts';
 
@@ -136,10 +136,14 @@ export default function App() {
     return localStorage.getItem('preferredVoice') || '';
   });
   const [theme, setTheme] = useState<ThemeKey>('light');
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [activeParagraphIdx, setActiveParagraphIdx] = useState<number>(-1);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const paragraphRefs = useRef<(HTMLParagraphElement | null)[]>([]);
 
   const t = THEMES[theme];
   const filteredDocs = documents.filter(doc => doc.category === activeCategory);
+
+  const paragraphs = selectedDoc ? selectedDoc.content.split('\n').filter(p => p.trim().length > 0) : [];
 
   useEffect(() => {
     getAvailableVoices().then(setVoices);
@@ -165,14 +169,37 @@ export default function App() {
     }
     stopSpeaking();
     setIsSpeaking(false);
+    setActiveParagraphIdx(-1);
   }, [activeCategory]);
+
+  const handleBoundary = useCallback((charIndex: number) => {
+    let accumulated = 0;
+    for (let i = 0; i < paragraphs.length; i++) {
+      accumulated += paragraphs[i].length + 1; // +1 for the newline
+      if (charIndex < accumulated) {
+        setActiveParagraphIdx(i);
+        return;
+      }
+    }
+    setActiveParagraphIdx(paragraphs.length - 1);
+  }, [paragraphs]);
 
   const handlePlay = () => {
     if (isSpeaking) {
       stopSpeaking();
       setIsSpeaking(false);
+      setActiveParagraphIdx(-1);
     } else if (selectedDoc) {
-      speak(selectedDoc.content, () => setIsSpeaking(false), SPEED_OPTIONS[speedIdx], selectedVoice);
+      speak(
+        selectedDoc.content,
+        () => {
+          setIsSpeaking(false);
+          setActiveParagraphIdx(-1);
+        },
+        SPEED_OPTIONS[speedIdx],
+        selectedVoice,
+        handleBoundary,
+      );
       setIsSpeaking(true);
     }
   };
@@ -180,6 +207,7 @@ export default function App() {
   const handleSelectDoc = (doc: LegalDocument) => {
     stopSpeaking();
     setIsSpeaking(false);
+    setActiveParagraphIdx(-1);
     setSelectedDoc(doc);
     if (isMobile) {
       setSidebarOpen(false);
@@ -204,6 +232,16 @@ export default function App() {
       return () => document.removeEventListener('click', close);
     }
   }, [showSpeedMenu, showThemeMenu, showFontMenu, showVoiceMenu]);
+
+  // Scroll active paragraph into view
+  useEffect(() => {
+    if (activeParagraphIdx >= 0 && paragraphRefs.current[activeParagraphIdx]) {
+      paragraphRefs.current[activeParagraphIdx]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, [activeParagraphIdx]);
 
   const themeColors: Record<ThemeKey, string> = {
     light: 'bg-white border-gray-300',
@@ -443,10 +481,20 @@ export default function App() {
           {selectedDoc ? (
             <div className={`max-w-4xl mx-auto ${t.cardBg} rounded-xl shadow-lg p-4 md:p-6 lg:p-8`}>
               <h2 className={`text-lg md:text-2xl font-bold ${t.headerText} mb-4 md:mb-6`}>{selectedDoc.title}</h2>
-              <div className="prose prose-gray max-w-none">
-                <pre className={`whitespace-pre-wrap font-sans ${t.contentText} leading-relaxed ${FONT_SIZES[fontSizeIdx].value}`}>
-                  {selectedDoc.content}
-                </pre>
+              <div ref={contentRef} className={`prose prose-gray max-w-none ${FONT_SIZES[fontSizeIdx].value}`}>
+                {paragraphs.map((para, idx) => (
+                  <p
+                    key={idx}
+                    ref={(el) => { paragraphRefs.current[idx] = el; }}
+                    className={`whitespace-pre-wrap leading-relaxed ${t.contentText} transition-all duration-200 ${
+                      activeParagraphIdx === idx
+                        ? 'font-bold'
+                        : 'font-normal'
+                    }`}
+                  >
+                    {para}
+                  </p>
+                ))}
               </div>
             </div>
           ) : (

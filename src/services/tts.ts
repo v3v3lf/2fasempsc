@@ -48,7 +48,13 @@ export async function getAvailableVoices(): Promise<VoiceOption[]> {
   return result;
 }
 
-export async function speak(text: string, onEnd?: () => void, rate?: number, voiceName?: string) {
+export async function speak(
+  text: string,
+  onEnd?: () => void,
+  rate?: number,
+  voiceName?: string,
+  onBoundary?: (charIndex: number) => void,
+) {
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
@@ -80,8 +86,15 @@ export async function speak(text: string, onEnd?: () => void, rate?: number, voi
     }
   }
 
+  if (onBoundary) {
+    utterance.onboundary = (event) => {
+      onBoundary(event.charIndex);
+    };
+  }
+
   if (onEnd) {
     utterance.onend = onEnd;
+    utterance.onerror = () => onEnd();
   }
 
   window.speechSynthesis.speak(utterance);
