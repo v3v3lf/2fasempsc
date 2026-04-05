@@ -129,6 +129,7 @@ export default function App() {
   const [speedIdx, setSpeedIdx] = useState(4);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [showFontMenu, setShowFontMenu] = useState(false);
   const [theme, setTheme] = useState<ThemeKey>('light');
 
   const t = THEMES[theme];
@@ -185,12 +186,13 @@ export default function App() {
     const close = () => {
       setShowSpeedMenu(false);
       setShowThemeMenu(false);
+      setShowFontMenu(false);
     };
-    if (showSpeedMenu || showThemeMenu) {
+    if (showSpeedMenu || showThemeMenu || showFontMenu) {
       document.addEventListener('click', close);
       return () => document.removeEventListener('click', close);
     }
-  }, [showSpeedMenu, showThemeMenu]);
+  }, [showSpeedMenu, showThemeMenu, showFontMenu]);
 
   const themeColors: Record<ThemeKey, string> = {
     light: 'bg-white border-gray-300',
@@ -221,20 +223,33 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          <div className={`flex items-center ${t.btnBg} rounded-lg overflow-hidden`}>
-            {FONT_SIZES.map((fs, i) => (
-              <button
-                key={i}
-                onClick={() => setFontSizeIdx(i)}
-                className={`px-1.5 py-1 text-xs font-medium transition-colors ${
-                  fontSizeIdx === i
-                    ? 'bg-blue-600 text-white'
-                    : `${t.btnIcon} ${t.btnHover}`
-                }`}
-              >
-                {fs.label}
-              </button>
-            ))}
+          <div className="relative">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowFontMenu(!showFontMenu); setShowSpeedMenu(false); setShowThemeMenu(false); }}
+              className={`flex items-center gap-1 px-2 py-1.5 ${t.btnBg} rounded-lg text-xs font-medium ${t.btnIcon} ${t.btnHover} transition-colors`}
+            >
+              <span className="font-bold">A</span>
+              <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {showFontMenu && (
+              <div className={`absolute right-0 top-full mt-1 ${t.speedMenuBg} rounded-lg shadow-lg border ${t.speedMenuBorder} py-1 z-50 min-w-[100px]`}>
+                {FONT_SIZES.map((fs, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => { e.stopPropagation(); setFontSizeIdx(i); setShowFontMenu(false); }}
+                    className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${
+                      fontSizeIdx === i
+                        ? t.speedMenuActive
+                        : `${t.speedMenuText} ${t.speedMenuHover}`
+                    }`}
+                  >
+                    <span className={fs.value}>{fs.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="relative">

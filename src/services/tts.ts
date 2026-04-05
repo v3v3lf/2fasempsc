@@ -29,19 +29,42 @@ export async function speak(text: string, onEnd?: () => void, rate?: number) {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'pt-BR';
   utterance.rate = rate ?? 0.95;
-  utterance.pitch = 0.85;
+  utterance.pitch = 1.0;
   utterance.volume = 1;
 
   const voices = await loadVoices();
-  const maleNames = ['daniel', 'luciano', 'jorge', 'rafael', 'felipe', 'antonio', 'marcos'];
+
+  // Priority: Google pt-BR (most natural) > other Google pt > pt-BR > any pt
   let ptVoice: SpeechSynthesisVoice | undefined;
-  for (const name of maleNames) {
-    ptVoice = voices.find(v => v.lang.startsWith('pt') && v.name.toLowerCase().includes(name));
-    if (ptVoice) break;
-  }
+
+  // 1st: Google Português do Brasil
+  ptVoice = voices.find(v => v.lang === 'pt-BR' && v.name.toLowerCase().includes('google'));
+
+  // 2nd: Any Google Portuguese
   if (!ptVoice) {
-    ptVoice = voices.find(v => v.lang === 'pt-BR') || voices.find(v => v.lang.startsWith('pt'));
+    ptVoice = voices.find(v => v.lang.startsWith('pt') && v.name.toLowerCase().includes('google'));
   }
+
+  // 3rd: Microsoft Maria (Windows pt-BR)
+  if (!ptVoice) {
+    ptVoice = voices.find(v => v.lang === 'pt-BR' && v.name.toLowerCase().includes('maria'));
+  }
+
+  // 4th: Microsoft Daniel (Windows pt-BR male)
+  if (!ptVoice) {
+    ptVoice = voices.find(v => v.lang === 'pt-BR' && v.name.toLowerCase().includes('daniel'));
+  }
+
+  // 5th: Any pt-BR
+  if (!ptVoice) {
+    ptVoice = voices.find(v => v.lang === 'pt-BR');
+  }
+
+  // 6th: Any Portuguese
+  if (!ptVoice) {
+    ptVoice = voices.find(v => v.lang.startsWith('pt'));
+  }
+
   if (ptVoice) {
     utterance.voice = ptVoice;
   }
