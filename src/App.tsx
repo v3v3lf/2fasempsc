@@ -93,7 +93,7 @@ export default function App() {
           w-72 md:w-80
           bg-white border-r border-gray-200 overflow-y-auto
           transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          ${sidebarOpen ? 'translate-x-0 md:translate-x-0' : '-translate-x-full md:-translate-x-full'}
           ${isMobile ? 'shadow-2xl' : ''}
         `}>
           <div className="p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
