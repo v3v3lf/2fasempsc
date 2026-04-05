@@ -203,26 +203,30 @@ export default function App() {
 
   return (
     <div className={`flex flex-col min-h-screen w-full ${t.bg} transition-colors duration-300`}>
-      <header className={`${t.headerBg} shadow-md px-3 py-2.5 flex items-center justify-center gap-3 flex-wrap`}>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={`p-2 rounded-lg ${t.btnHover} transition-colors flex-shrink-0`}
-        >
-          <svg className={`w-5 h-5 ${t.btnIcon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {sidebarOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
-        </button>
+      <header className={`${t.headerBg} shadow-md px-3 py-2.5 flex flex-col gap-2`}>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`p-2 rounded-lg ${t.btnHover} transition-colors flex-shrink-0`}
+          >
+            <svg className={`w-5 h-5 ${t.btnIcon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {sidebarOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
 
-        <div className="text-center">
-          <h1 className={`text-lg md:text-2xl font-bold ${t.headerText} truncate`}>📚 Peças Jurídicas</h1>
-          <p className={`${t.headerSubtext} text-xs mt-0.5 hidden sm:block`}>{documents.length} documentos disponíveis</p>
+          <div className="flex-1 min-w-0 text-center">
+            <h1 className={`text-lg md:text-2xl font-bold ${t.headerText} truncate`}>📚 Peças Jurídicas</h1>
+            <p className={`${t.headerSubtext} text-xs mt-0.5 hidden sm:block`}>{documents.length} documentos disponíveis</p>
+          </div>
+
+          <div className="w-9 flex-shrink-0" />
         </div>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="flex items-center justify-center gap-1.5 flex-wrap">
           <div className="relative">
             <button
               onClick={(e) => { e.stopPropagation(); setShowFontMenu(!showFontMenu); setShowSpeedMenu(false); setShowThemeMenu(false); }}
