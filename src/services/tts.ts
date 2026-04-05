@@ -23,7 +23,32 @@ function loadVoices(): Promise<SpeechSynthesisVoice[]> {
   });
 }
 
-export async function speak(text: string, onEnd?: () => void, rate?: number) {
+export interface VoiceOption {
+  name: string;
+  label: string;
+  lang: string;
+}
+
+export async function getAvailableVoices(): Promise<VoiceOption[]> {
+  const voices = await loadVoices();
+  const ptVoices = voices.filter(v => v.lang.startsWith('pt'));
+
+  const result: VoiceOption[] = [
+    { name: '', label: 'Automática', lang: 'pt-BR' },
+  ];
+
+  for (const voice of ptVoices) {
+    result.push({
+      name: voice.name,
+      label: `${voice.name} (${voice.lang})`,
+      lang: voice.lang,
+    });
+  }
+
+  return result;
+}
+
+export async function speak(text: string, onEnd?: () => void, rate?: number, voiceName?: string) {
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
@@ -34,39 +59,25 @@ export async function speak(text: string, onEnd?: () => void, rate?: number) {
 
   const voices = await loadVoices();
 
-  // Priority: Google pt-BR (most natural) > other Google pt > pt-BR > any pt
-  let ptVoice: SpeechSynthesisVoice | undefined;
-
-  // 1st: Google Português do Brasil
-  ptVoice = voices.find(v => v.lang === 'pt-BR' && v.name.toLowerCase().includes('google'));
-
-  // 2nd: Any Google Portuguese
-  if (!ptVoice) {
-    ptVoice = voices.find(v => v.lang.startsWith('pt') && v.name.toLowerCase().includes('google'));
+  if (voiceName) {
+    const selected = voices.find(v => v.name === voiceName);
+    if (selected) {
+      utterance.voice = selected;
+    }
   }
 
-  // 3rd: Microsoft Maria (Windows pt-BR)
-  if (!ptVoice) {
-    ptVoice = voices.find(v => v.lang === 'pt-BR' && v.name.toLowerCase().includes('maria'));
-  }
-
-  // 4th: Microsoft Daniel (Windows pt-BR male)
-  if (!ptVoice) {
-    ptVoice = voices.find(v => v.lang === 'pt-BR' && v.name.toLowerCase().includes('daniel'));
-  }
-
-  // 5th: Any pt-BR
-  if (!ptVoice) {
-    ptVoice = voices.find(v => v.lang === 'pt-BR');
-  }
-
-  // 6th: Any Portuguese
-  if (!ptVoice) {
-    ptVoice = voices.find(v => v.lang.startsWith('pt'));
-  }
-
-  if (ptVoice) {
-    utterance.voice = ptVoice;
+  if (!utterance.voice) {
+    let ptVoice: SpeechSynthesisVoice | undefined;
+    ptVoice = voices.find(v => v.lang === 'pt-BR' && v.name.toLowerCase().includes('google'));
+    if (!ptVoice) {
+      ptVoice = voices.find(v => v.lang === 'pt-BR');
+    }
+    if (!ptVoice) {
+      ptVoice = voices.find(v => v.lang.startsWith('pt'));
+    }
+    if (ptVoice) {
+      utterance.voice = ptVoice;
+    }
   }
 
   if (onEnd) {

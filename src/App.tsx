@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { documents, LegalDocument, DocumentCategory } from './data/documents';
-import { speak, stopSpeaking } from './services/tts';
+import { speak, stopSpeaking, getAvailableVoices, VoiceOption } from './services/tts';
 
 const FONT_SIZES = [
   { label: 'A-', value: 'text-xs' },
@@ -130,10 +130,19 @@ export default function App() {
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [showFontMenu, setShowFontMenu] = useState(false);
+  const [showVoiceMenu, setShowVoiceMenu] = useState(false);
+  const [voices, setVoices] = useState<VoiceOption[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<string>(() => {
+    return localStorage.getItem('preferredVoice') || '';
+  });
   const [theme, setTheme] = useState<ThemeKey>('light');
 
   const t = THEMES[theme];
   const filteredDocs = documents.filter(doc => doc.category === activeCategory);
+
+  useEffect(() => {
+    getAvailableVoices().then(setVoices);
+  }, []);
 
   useEffect(() => {
     const check = () => {
@@ -162,7 +171,7 @@ export default function App() {
       stopSpeaking();
       setIsSpeaking(false);
     } else if (selectedDoc) {
-      speak(selectedDoc.content, () => setIsSpeaking(false), SPEED_OPTIONS[speedIdx]);
+      speak(selectedDoc.content, () => setIsSpeaking(false), SPEED_OPTIONS[speedIdx], selectedVoice);
       setIsSpeaking(true);
     }
   };
@@ -187,12 +196,13 @@ export default function App() {
       setShowSpeedMenu(false);
       setShowThemeMenu(false);
       setShowFontMenu(false);
+      setShowVoiceMenu(false);
     };
-    if (showSpeedMenu || showThemeMenu || showFontMenu) {
+    if (showSpeedMenu || showThemeMenu || showFontMenu || showVoiceMenu) {
       document.addEventListener('click', close);
       return () => document.removeEventListener('click', close);
     }
-  }, [showSpeedMenu, showThemeMenu, showFontMenu]);
+  }, [showSpeedMenu, showThemeMenu, showFontMenu, showVoiceMenu]);
 
   const themeColors: Record<ThemeKey, string> = {
     light: 'bg-white border-gray-300',
@@ -303,6 +313,44 @@ export default function App() {
                   >
                     <div className={`w-4 h-4 rounded-full border ${themeColors[key]}`} />
                     {THEMES[key].name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowVoiceMenu(!showVoiceMenu); setShowThemeMenu(false); setShowSpeedMenu(false); setShowFontMenu(false); }}
+              className={`flex items-center gap-1 px-2 py-1.5 ${t.btnBg} rounded-lg text-xs font-medium ${t.btnIcon} ${t.btnHover} transition-colors`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+            </button>
+            {showVoiceMenu && (
+              <div className={`absolute right-0 top-full mt-1 ${t.speedMenuBg} rounded-lg shadow-lg border ${t.speedMenuBorder} py-1 z-50 min-w-[200px] max-h-64 overflow-y-auto`}>
+                <p className={`text-xs font-medium ${t.speedMenuText} px-3 py-1.5 border-b ${t.speedMenuBorder}`}>Voz</p>
+                {voices.length === 0 && (
+                  <p className={`px-3 py-2 text-xs ${t.speedMenuText} italic`}>Carregando vozes...</p>
+                )}
+                {voices.map((voice, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedVoice(voice.name);
+                      localStorage.setItem('preferredVoice', voice.name);
+                      setShowVoiceMenu(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${
+                      selectedVoice === voice.name
+                        ? t.speedMenuActive
+                        : `${t.speedMenuText} ${t.speedMenuHover}`
+                    }`}
+                  >
+                    <span className="mr-1.5">{selectedVoice === voice.name ? '●' : '○'}</span>
+                    {voice.label}
                   </button>
                 ))}
               </div>
