@@ -422,15 +422,32 @@ export default function App() {
               <div className={`absolute right-0 top-full mt-1 ${t.speedMenuBg} rounded-lg shadow-lg border ${t.speedMenuBorder} py-3 z-50 min-w-[280px]`}>
                 <p className={`text-xs font-medium ${t.speedMenuText} px-3 pb-2 border-b ${t.speedMenuBorder} mb-2`}>Configurações de Áudio</p>
                 <div className="px-3 py-2">
-                  <label className={`text-xs font-medium ${t.speedMenuText} block mb-1`}>API Key do Gemini</label>
-                  <input
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    onBlur={() => { localStorage.setItem('geminiApiKey', apiKey); }}
-                    placeholder="Cole sua API key aqui..."
-                    className={`w-full px-2 py-1.5 text-sm rounded border ${t.speedMenuBorder} ${t.speedMenuText} bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-500`}
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={`text-xs font-medium ${t.speedMenuText}`}>API Key do Gemini</label>
+                    <a
+                      href="https://aistudio.google.com/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-500 hover:underline"
+                    >
+                      Obter API Key
+                    </a>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      placeholder="Cole sua API key aqui..."
+                      className={`flex-1 px-2 py-1.5 text-sm rounded border ${t.speedMenuBorder} ${t.speedMenuText} bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                    />
+                    <button
+                      onClick={() => { localStorage.setItem('geminiApiKey', apiKey); }}
+                      className="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Salvar
+                    </button>
+                  </div>
                 </div>
                 <div className="px-3 py-2 border-t border-gray-100">
                   <label className="flex items-center gap-2 cursor-pointer">
