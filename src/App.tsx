@@ -139,7 +139,6 @@ export default function App() {
   const [activeParagraphIdx, setActiveParagraphIdx] = useState<number>(-1);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const paragraphRefs = useRef<(HTMLParagraphElement | null)[]>([]);
-  const cancelIntentionally = useRef(false);
 
   const t = THEMES[theme];
   const filteredDocs = documents.filter(doc => doc.category === activeCategory);
@@ -168,7 +167,6 @@ export default function App() {
     } else if (selectedDoc && selectedDoc.category !== activeCategory) {
       setSelectedDoc(filteredDocs.length > 0 ? filteredDocs[0] : null);
     }
-    cancelIntentionally.current = true;
     stopSpeaking();
     setPlaybackState('idle');
     setActiveParagraphIdx(-1);
@@ -176,24 +174,24 @@ export default function App() {
 
   const handlePlay = () => {
     if ((playbackState === 'paused' || playbackState === 'idle') && selectedDoc) {
-      cancelIntentionally.current = false;
-      const startIndex = Math.max(0, activeParagraphIdx);
-      const textToSpeak = paragraphs.slice(startIndex).join('\n');
-      
+      if (playbackState === 'paused') {
+        resumeSpeaking();
+        setPlaybackState('playing');
+        return;
+      }
+
       speak(
-        textToSpeak,
+        selectedDoc.content,
         () => {
-          if (!cancelIntentionally.current) {
-            setPlaybackState('idle');
-            setActiveParagraphIdx(-1);
-          }
+          setPlaybackState('idle');
+          setActiveParagraphIdx(-1);
         },
         SPEED_OPTIONS[speedIdx],
         selectedVoice,
         (charIndex) => {
           let accumulated = 0;
-          for (let i = startIndex; i < paragraphs.length; i++) {
-            accumulated += paragraphs[i].length + 1;
+          for (let i = 0; i < paragraphs.length; i++) {
+            accumulated += paragraphs[i].length + 1; // +1 for the newline
             if (charIndex < accumulated) {
               setActiveParagraphIdx(i);
               return;
@@ -208,21 +206,18 @@ export default function App() {
 
   const handlePause = () => {
     if (playbackState === 'playing') {
-      cancelIntentionally.current = true;
-      stopSpeaking();
+      pauseSpeaking();
       setPlaybackState('paused');
     }
   };
 
   const handleStop = () => {
-    cancelIntentionally.current = true;
     stopSpeaking();
     setPlaybackState('idle');
     setActiveParagraphIdx(-1);
   };
 
   const handleSelectDoc = (doc: LegalDocument) => {
-    cancelIntentionally.current = true;
     stopSpeaking();
     setPlaybackState('idle');
     setActiveParagraphIdx(-1);
