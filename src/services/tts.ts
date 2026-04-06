@@ -50,8 +50,11 @@ export async function getAvailableVoices(): Promise<VoiceOption[]> {
 
 let currentChunks: { text: string; offset: number }[] = [];
 let currentChunkIndex = 0;
+let currentRate = 0.95;
+let currentVoice: SpeechSynthesisVoice | undefined;
 let globalOnEnd: (() => void) | undefined;
 let globalOnBoundary: ((charIndex: number) => void) | undefined;
+let isPaused = false;
 
 function chunkText(text: string, maxLength: number): { text: string; offset: number }[] {
   const chunks: { text: string; offset: number }[] = [];
@@ -89,16 +92,16 @@ export function speak(
   voiceName?: string,
   onBoundary?: (charIndex: number) => void,
 ) {
-  // Limpar a fila atual antes de cancelar para abortar a sequência anterior
   currentChunks = [];
   window.speechSynthesis.cancel();
   
   currentChunks = chunkText(text, 1500);
   currentChunkIndex = 0;
+  currentRate = rate ?? 0.95;
   globalOnEnd = onEnd;
   globalOnBoundary = onBoundary;
+  isPaused = false;
   
-  // Pegar vozes de modo síncrono para não perder a interação do usuário (bug do Android)
   const voices = window.speechSynthesis.getVoices();
   let selectedVoice = voices.find(v => v.name === voiceName);
   
@@ -108,10 +111,11 @@ export function speak(
                     voices.find(v => v.lang.startsWith('pt'));
   }
   
-  playNextChunk(rate ?? 0.95, selectedVoice);
+  currentVoice = selectedVoice;
+  playNextChunk();
 }
 
-function playNextChunk(rate: number, voice?: SpeechSynthesisVoice) {
+function playNextChunk() {
   if (currentChunkIndex >= currentChunks.length) {
     globalOnEnd?.();
     return;
@@ -120,12 +124,12 @@ function playNextChunk(rate: number, voice?: SpeechSynthesisVoice) {
   const chunk = currentChunks[currentChunkIndex];
   const utterance = new SpeechSynthesisUtterance(chunk.text);
   utterance.lang = 'pt-BR';
-  utterance.rate = rate;
+  utterance.rate = currentRate;
   utterance.pitch = 1.0;
   utterance.volume = 1;
   
-  if (voice) {
-    utterance.voice = voice;
+  if (currentVoice) {
+    utterance.voice = currentVoice;
   }
   
   utterance.onboundary = (e) => {
@@ -133,18 +137,16 @@ function playNextChunk(rate: number, voice?: SpeechSynthesisVoice) {
   };
   
   utterance.onend = () => {
-    // Avançar apenas se a fila ainda estiver válida
-    if (currentChunks.length === 0) return;
+    if (currentChunks.length === 0 || isPaused) return;
     currentChunkIndex++;
-    playNextChunk(rate, voice);
+    playNextChunk();
   };
   
   utterance.onerror = (e) => {
-    // Ignorar erro se tiver sido cancelado intencionalmente
-    if (currentChunks.length === 0) return;
+    if (currentChunks.length === 0 || isPaused) return;
     console.error('TTS Error', e);
     currentChunkIndex++;
-    playNextChunk(rate, voice);
+    playNextChunk();
   };
   
   window.speechSynthesis.speak(utterance);
@@ -152,13 +154,19 @@ function playNextChunk(rate: number, voice?: SpeechSynthesisVoice) {
 
 export function stopSpeaking() {
   currentChunks = [];
+  currentChunkIndex = 0;
+  isPaused = false;
   window.speechSynthesis.cancel();
 }
 
 export function pauseSpeaking() {
-  window.speechSynthesis.pause();
+  if (currentChunks.length === 0) return;
+  isPaused = true;
+  window.speechSynthesis.cancel();
 }
 
 export function resumeSpeaking() {
-  window.speechSynthesis.resume();
+  if (currentChunks.length === 0 || currentChunkIndex >= currentChunks.length) return;
+  isPaused = false;
+  playNextChunk();
 }
