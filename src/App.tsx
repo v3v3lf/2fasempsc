@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { documents, LegalDocument, DocumentCategory } from './data/documents';
-import { speak, stopSpeaking, getAvailableVoices, VoiceOption } from './services/tts';
+import { speak, stopSpeaking, pauseSpeaking, resumeSpeaking, getAvailableVoices, VoiceOption } from './services/tts';
 
 const FONT_SIZES = [
   { label: 'A-', value: 'text-xs' },
@@ -122,7 +122,7 @@ type ThemeKey = keyof typeof THEMES;
 export default function App() {
   const [activeCategory, setActiveCategory] = useState<DocumentCategory>('Crime');
   const [selectedDoc, setSelectedDoc] = useState<LegalDocument | null>(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [playbackState, setPlaybackState] = useState<'idle' | 'playing' | 'paused'>('idle');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [fontSizeIdx, setFontSizeIdx] = useState(1);
@@ -168,7 +168,7 @@ export default function App() {
       setSelectedDoc(filteredDocs.length > 0 ? filteredDocs[0] : null);
     }
     stopSpeaking();
-    setIsSpeaking(false);
+    setPlaybackState('idle');
     setActiveParagraphIdx(-1);
   }, [activeCategory]);
 
@@ -185,28 +185,40 @@ export default function App() {
   }, [paragraphs]);
 
   const handlePlay = () => {
-    if (isSpeaking) {
-      stopSpeaking();
-      setIsSpeaking(false);
-      setActiveParagraphIdx(-1);
-    } else if (selectedDoc) {
+    if (playbackState === 'paused') {
+      resumeSpeaking();
+      setPlaybackState('playing');
+    } else if (playbackState === 'idle' && selectedDoc) {
       speak(
         selectedDoc.content,
         () => {
-          setIsSpeaking(false);
+          setPlaybackState('idle');
           setActiveParagraphIdx(-1);
         },
         SPEED_OPTIONS[speedIdx],
         selectedVoice,
         handleBoundary,
       );
-      setIsSpeaking(true);
+      setPlaybackState('playing');
     }
+  };
+
+  const handlePause = () => {
+    if (playbackState === 'playing') {
+      pauseSpeaking();
+      setPlaybackState('paused');
+    }
+  };
+
+  const handleStop = () => {
+    stopSpeaking();
+    setPlaybackState('idle');
+    setActiveParagraphIdx(-1);
   };
 
   const handleSelectDoc = (doc: LegalDocument) => {
     stopSpeaking();
-    setIsSpeaking(false);
+    setPlaybackState('idle');
     setActiveParagraphIdx(-1);
     setSelectedDoc(doc);
     if (isMobile) {
@@ -396,31 +408,47 @@ export default function App() {
             )}
           </div>
 
-          <div className="relative">
+          <div className="flex items-center gap-1.5 bg-black/5 dark:bg-white/5 rounded-lg p-0.5 border border-black/5 dark:border-white/5">
             <button
-              onClick={handlePlay}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all shadow-sm ${
-                isSpeaking
-                  ? 'bg-red-500 text-white hover:bg-red-600'
+              onClick={playbackState === 'playing' ? handlePause : handlePlay}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-all shadow-sm ${
+                playbackState === 'playing'
+                  ? 'bg-amber-500 text-white hover:bg-amber-600'
                   : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}
             >
-              {isSpeaking ? (
+              {playbackState === 'playing' ? (
                 <>
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <rect x="6" y="4" width="4" height="12" rx="1" />
-                    <rect x="12" y="4" width="4" height="12" rx="1" />
+                    <rect x="6" y="4" width="3" height="12" rx="1" />
+                    <rect x="11" y="4" width="3" height="12" rx="1" />
                   </svg>
-                  <span className="hidden sm:inline">Parar</span>
+                  <span className="hidden sm:inline">Pausar</span>
                 </>
               ) : (
                 <>
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
                   </svg>
-                  <span className="hidden sm:inline">Ouvir</span>
+                  <span className="hidden sm:inline">
+                    {playbackState === 'paused' ? 'Continuar' : 'Ouvir'}
+                  </span>
                 </>
               )}
+            </button>
+            <button
+              onClick={handleStop}
+              disabled={playbackState === 'idle'}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-all ${
+                playbackState === 'idle'
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600 opacity-50'
+                  : 'bg-red-500 text-white hover:bg-red-600 shadow-sm'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <rect x="6" y="6" width="8" height="8" rx="1" />
+              </svg>
+              <span className="hidden sm:inline">Parar</span>
             </button>
           </div>
         </div>

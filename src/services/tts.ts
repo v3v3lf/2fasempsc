@@ -103,3 +103,11 @@ export async function speak(
 export function stopSpeaking() {
   window.speechSynthesis.cancel();
 }
+
+export function pauseSpeaking() {
+  window.speechSynthesis.pause();
+}
+
+export function resumeSpeaking() {
+  window.speechSynthesis.resume();
+}
