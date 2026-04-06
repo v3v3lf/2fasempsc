@@ -175,7 +175,10 @@ export default function App() {
   }, [activeCategory]);
 
   const handlePlay = () => {
-    if ((playbackState === 'paused' || playbackState === 'idle') && selectedDoc) {
+    if (playbackState === 'paused') {
+      resumeSpeaking();
+      setPlaybackState('playing');
+    } else if (playbackState === 'idle' && selectedDoc) {
       const sessionId = Date.now();
       currentSpeechSessionId.current = sessionId;
       const startIndex = Math.max(0, activeParagraphIdx);
@@ -209,8 +212,7 @@ export default function App() {
 
   const handlePause = () => {
     if (playbackState === 'playing') {
-      currentSpeechSessionId.current = 0;
-      stopSpeaking();
+      pauseSpeaking();
       setPlaybackState('paused');
     }
   };
